@@ -1975,8 +1975,13 @@ const WORDS_DATA = [
     function shuffle(){for(let i=words.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[words[i],words[j]]=[words[j],words[i]]}buildSelect();buildList();showWord(0)}
     function unshuffle(){words=[...allWords];buildSelect();buildList();showWord(0)}
 
-    btnPrev.addEventListener('click',()=>showWord(idx-1));
-    btnNext.addEventListener('click',()=>showWord(idx+1));
+    btnPrev.addEventListener('click',(e)=>{e.preventDefault();showWord(idx-1)});
+    btnNext.addEventListener('click',(e)=>{e.preventDefault();showWord(idx+1)});
+
+    // Safari ダブルタップズーム完全防止
+    document.querySelectorAll('.nav-btn,.shuffle-btn,.mode-tab').forEach(el=>{
+        el.addEventListener('touchend',e=>{e.preventDefault();el.click()},{passive:false});
+    });
     wordSel.addEventListener('change',()=>showWord(parseInt(wordSel.value)));
     $('#btn-shuffle').addEventListener('click',()=>{
         const s=words.some((w,i)=>allWords[i]&&w.number!==allWords[i].number);
