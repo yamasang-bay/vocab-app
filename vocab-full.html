@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>英単語学習アプリ (#463–680)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI','Hiragino Sans','Meiryo',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:12px;-webkit-tap-highlight-color:transparent}
+        .container{width:100%;max-width:480px;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;display:flex;flex-direction:column;min-height:calc(100vh - 24px)}
+
+        /* ヘッダー */
+        .header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:18px 20px 14px;text-align:center}
+        .header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+        .header-sub{display:flex;justify-content:center;align-items:center;gap:16px;font-size:13px;opacity:.9}
+        .progress-bar-wrap{width:100%;height:4px;background:rgba(255,255,255,.25);border-radius:2px;margin-top:10px;overflow:hidden}
+        .progress-bar{height:100%;background:#fff;border-radius:2px;transition:width .3s ease}
+
+        /* モードタブ */
+        .mode-tabs{display:flex;background:#f5f5f5;border-bottom:1px solid #e0e0e0}
+        .mode-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#888;cursor:pointer;border:none;background:none;transition:all .2s;position:relative}
+        .mode-tab.active{color:#667eea;background:#fff}
+        .mode-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:#667eea;border-radius:3px 3px 0 0}
+
+        /* カードエリア */
+        .card-area{flex:1;display:flex;justify-content:center;align-items:center;padding:24px 16px;position:relative;overflow:hidden;min-height:340px}
+        .card{width:100%;background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08);text-align:center;position:relative;display:none;animation:fadeSlide .35s ease-out}
+        .card.active{display:block}
+        @keyframes fadeSlide{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        .card-inner{padding:24px 24px 28px}
+        .word-num-bar{padding:12px 20px 0;font-size:30px;font-weight:800;color:#667eea;text-align:left}
+
+        /* 英単語カード */
+        .card-english .eng-word{font-family:'Inter',sans-serif;font-size:clamp(40px,11vw,72px);font-weight:900;color:#222;line-height:1.15;word-break:break-word;margin-bottom:20px}
+        .card-english .pos-badge{display:inline-block;margin-top:28px;font-size:32px;font-weight:700;padding:12px 32px;border-radius:32px;letter-spacing:.5px}
+        .pos-名,.pos-代{background:#eef1ff;color:#667eea}
+        .pos-動{background:#fff0f0;color:#e74c3c}
+        .pos-形{background:#eefbee;color:#27ae60}
+        .pos-副{background:#fff8e6;color:#f39c12}
+        .pos-前{background:#f0f0f0;color:#555}
+        .pos-接{background:#f0ecff;color:#8e44ad}
+        .pos-間{background:#e8f8f5;color:#16a085}
+        .pos-助{background:#fdf2f8;color:#c2185b}
+        .pos-default{background:#f0f0f0;color:#555}
+        .tap-hint{margin-top:24px;font-size:12px;color:#bbb}
+
+        /* 日本語・例文カード */
+        .card-answer .ja-word{font-size:clamp(28px,7vw,48px);font-weight:800;color:#222;line-height:1.5;margin-bottom:20px;word-break:break-word}
+        .card-answer .pos-badge-lg{display:inline-block;font-size:32px;font-weight:700;padding:12px 32px;border-radius:32px;margin-bottom:24px}
+        .example-box{text-align:left;border-top:1px solid #eee;padding-top:16px;margin-top:8px}
+        .example-box .label{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px}
+        .example-box .ex-en{font-size:15px;color:#333;line-height:1.7;font-style:italic;margin-bottom:14px}
+        .example-box .ex-en .hl{font-weight:700;color:#667eea;background:#f0f4ff;padding:1px 4px;border-radius:3px;font-style:normal}
+        .example-box .ex-ja{font-size:15px;color:#555;line-height:1.7}
+
+        /* 一覧モード */
+        .list-view{display:none;flex-direction:column;overflow-y:auto;flex:1}
+        .list-view.active{display:flex}
+        .list-item{display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .15s}
+        .list-item:hover,.list-item:active{background:#f8f5ff}
+        .list-item .li-num{font-size:12px;color:#667eea;font-weight:700;width:40px;flex-shrink:0}
+        .list-item .li-eng{flex:1;font-size:15px;font-weight:600;color:#333}
+        .list-item .li-ja{font-size:13px;color:#888;max-width:50%;text-align:right}
+
+        /* フッターナビ */
+        .nav-footer{display:flex;gap:10px;padding:16px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0}
+        .nav-btn{flex:1;padding:20px 10px;border:none;border-radius:14px;font-size:20px;font-weight:700;cursor:pointer;transition:all .2s;min-height:64px}
+        .nav-btn:disabled{opacity:.4;cursor:not-allowed}
+        .btn-prev{background:#e8e8e8;color:#333}
+        .btn-prev:hover:not(:disabled){background:#ddd;transform:translateX(-2px)}
+        .btn-next{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+        .btn-next:hover:not(:disabled){box-shadow:0 4px 14px rgba(102,126,234,.4);transform:translateX(2px)}
+
+        /* セレクター */
+        .selector-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid #eee}
+        .selector-bar label{font-size:13px;font-weight:600;white-space:nowrap}
+        .selector-bar select{flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff}
+        .selector-bar select:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.12)}
+        .shuffle-btn{padding:8px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:14px;cursor:pointer;transition:all .2s}
+        .shuffle-btn:hover{border-color:#667eea;background:#f8f5ff}
+
+        @media(max-width:480px){body{padding:0}.container{border-radius:0;min-height:100vh}}
+        @media(min-height:800px){.card-area{min-height:400px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📖 英単語学習</h1>
+            <div class="header-sub">
+                <span class="range">#463 – #680</span>
+                <span id="counter">0 / 218</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+            </div>
+        </header>
+
+        <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="card">カード学習</button>
+            <button class="mode-tab" data-mode="list">一覧</button>
+        </div>
+
+        <div class="word-num-bar" id="word-num-bar">#463</div>
+        <div class="card-area" id="card-area">
+            <div class="card card-english active" id="card-q">
+                <div class="card-inner">
+                    <div class="eng-word" id="eng-word">layer</div>
+                    <div class="pos-badge pos-名" id="pos-q">名詞</div>
+                    <div class="tap-hint">タップ / → で答え表示</div>
+                </div>
+            </div>
+            <div class="card card-answer" id="card-a">
+                <div class="card-inner">
+                    <div class="ja-word" id="ja-word">層</div>
+                    <div class="pos-badge-lg pos-名" id="pos-a">名詞</div>
+                    <div class="example-box">
+                        <div class="label">Example</div>
+                        <div class="ex-en" id="ex-en"></div>
+                        <div class="label" style="margin-top:10px">和訳</div>
+                        <div class="ex-ja" id="ex-ja"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-view" id="list-view"></div>
+
+        <nav class="nav-footer" id="nav-footer">
+            <button class="nav-btn btn-prev" id="btn-prev">◀ 前へ</button>
+            <button class="nav-btn btn-next" id="btn-next">次へ ▶</button>
+        </nav>
+
+        <div class="selector-bar">
+            <label for="word-sel">移動:</label>
+            <select id="word-sel"></select>
+            <button class="shuffle-btn" id="btn-shuffle" title="シャッフル">🔀</button>
+        </div>
+    </div>
+
+<script>
+const WORDS_DATA = [
+  {
+    "number": 463,
+    "english": "layer",
+    "part_of_speech": "名",
+    "japanese": "層",
+    "example_en": "This sweet has four layers of chocolate.",
+    "example_ja": "（このお菓子は4層のチョコレートから成ります。）"
+  },
+  {
+    "number": 464,
+    "english": "copper",
+    "part_of_speech": "名",
+    "japanese": "銅",
+    "example_en": "That statue is covered with copper.",
+    "example_ja": "（あの像は銅に覆われています。）"
+  },
+  {
+    "number": 465,
+    "english": "shiny",
+    "part_of_speech": "形",
+    "japanese": "輝く",
+    "example_en": "Bill usually wears shiny shoes.",
+    "example_ja": "（ビルはたいていピカピカの靴をはいています。）"
+  },
+  {
+    "number": 466,
+    "english": "bronze",
+    "part_of_speech": "形",
+    "japanese": "赤褐色の、青銅色の",
+    "example_en": "There is a bronze statue in the pork.",
+    "example_ja": "（その公園にはブロンズ像があります。）"
+  },
+  {
+    "number": 467,
+    "english": "gradually",
+    "part_of_speech": "副",
+    "japanese": "徐々に、だんだん",
+    "example_en": "The artist gradually became popular.",
+    "example_ja": "（そのアーティストは徐々に人気を獲得していきました。）"
+  },
+  {
+    "number": 468,
+    "english": "over time",
+    "part_of_speech": "",
+    "japanese": "時が経つにつれて、やがて",
+    "example_en": "Copper becomes green over time",
+    "example_ja": "（銅は時が経つにつれて緑色になります。）"
+  },
+  {
+    "number": 469,
+    "english": "stolen",
+    "part_of_speech": "",
+    "japanese": "steal の過去分詞",
+    "example_en": "What was stolen from Mary's locker？",
+    "example_ja": "（メアリーのロッカーから何が盗まれたのですか。）"
+  },
+  {
+    "number": 470,
+    "english": "steal",
+    "part_of_speech": "動",
+    "japanese": "〜を盗む",
+    "example_en": "They didn't steal money from the store.",
+    "example_ja": "（彼らはそのお店から金を盗みませんでした。）"
+  },
+  {
+    "number": 471,
+    "english": "purse",
+    "part_of_speech": "名",
+    "japanese": "小銭入れ、財布，ハンドバッグ",
+    "example_en": "Where was Mary's purse found？",
+    "example_ja": "（メアリーのハンドバッグはどこで見つかりましたか。）"
+  },
+  {
+    "number": 472,
+    "english": "restroom",
+    "part_of_speech": "名",
+    "japanese": "＜公共施設の＞ トイレ、お手洗い",
+    "example_en": "Her purse was found in the restroom.",
+    "example_ja": "（彼女の財布はトイレで見つかりました。）"
+  },
+  {
+    "number": 473,
+    "english": "clerk",
+    "part_of_speech": "名",
+    "japanese": "店員",
+    "example_en": "The shop clerk was quite kind.",
+    "example_ja": "（その店員はとても親切でした。）"
+  },
+  {
+    "number": 474,
+    "english": "instant",
+    "part_of_speech": "形",
+    "japanese": "即席の，即座の",
+    "example_en": "Who were instant noodles invented by？",
+    "example_ja": "（即席めんは誰によって発明されたのですか。）"
+  },
+  {
+    "number": 475,
+    "english": "invent",
+    "part_of_speech": "動",
+    "japanese": "〜を発明する、考案する",
+    "example_en": "They were invented by Ando Momofuku.",
+    "example_ja": "（それは安福によって発明されました。）"
+  },
+  {
+    "number": 476,
+    "english": "whom",
+    "part_of_speech": "名",
+    "japanese": "誰を〔に〕（who の目的格＞",
+    "example_en": "By whom were instant noodles invented？",
+    "example_ja": "（即席めんは誰によって発明されたのですか。）"
+  },
+  {
+    "number": 477,
+    "english": "hall",
+    "part_of_speech": "名",
+    "japanese": "会館，ホール",
+    "example_en": "The hall was filled with people.",
+    "example_ja": "（ホールは満席でした。）"
+  },
+  {
+    "number": 478,
+    "english": "fill",
+    "part_of_speech": "動",
+    "japanese": "〜をいっぱいにする、満たす",
+    "example_en": "Fill this bottle with water.",
+    "example_ja": "（このびんいっぱいに水を入れてください。）"
+  },
+  {
+    "number": 479,
+    "english": "known",
+    "part_of_speech": "",
+    "japanese": "know の過去分詞",
+    "example_en": "The singer is known to many people.",
+    "example_ja": "（その歌手は多くの人々に知られています。）"
+  },
+  {
+    "number": 480,
+    "english": "surprise",
+    "part_of_speech": "動",
+    "japanese": "＜be surprised at~で）〜に驚く",
+    "example_en": "We were surprised at her beautiful voice.",
+    "example_ja": "（私たちは彼女の美しい声に驚きました。）"
+  },
+  {
+    "number": 481,
+    "english": "voice",
+    "part_of_speech": "名",
+    "japanese": "声",
+    "example_en": "Her singing voice was beautiful.",
+    "example_ja": "（彼女の歌声は美しかったです。）"
+  },
+  {
+    "number": 482,
+    "english": "caught",
+    "part_of_speech": "",
+    "japanese": "catchの過去形・過去分詞",
+    "example_en": "We were caught in the rain on our way home.",
+    "example_ja": "（私たちは帰り道に雨に降られました。）"
+  },
+  {
+    "number": 483,
+    "english": "shock",
+    "part_of_speech": "動",
+    "japanese": "＜be shocked at〜で）〜に驚く、 衝撃を受ける",
+    "example_en": "I am shocked at the TV news.",
+    "example_ja": "（私はそのテレビのニュースに衝撃を受けています。）"
+  },
+  {
+    "number": 484,
+    "english": "satisfe",
+    "part_of_speech": "動",
+    "japanese": "<be satisfied with〜で）〜に 満足する",
+    "example_en": "I was satisfed with the end of the story.",
+    "example_ja": "（物語の結末には満足しました。）"
+  },
+  {
+    "number": 485,
+    "english": "disappoint",
+    "part_of_speech": "動",
+    "japanese": "〜にがっかりさせる",
+    "example_en": "Young people are disappointed in politics.",
+    "example_ja": "（若者たちは政治に落胆しています。）"
+  },
+  {
+    "number": 486,
+    "english": "interest",
+    "part_of_speech": "動",
+    "japanese": "Kbe interested in〜で）〜に興 味がある",
+    "example_en": "My brother is interested in modern jazz.",
+    "example_ja": "（私の兄はモダンジャズに興味があります。）"
+  },
+  {
+    "number": 487,
+    "english": "tire",
+    "part_of_speech": "動",
+    "japanese": "<be tired of 〜で） 〜にあきて いる",
+    "example_en": "I'm tired of waiting for Ted.",
+    "example_ja": "（テッドのことは待ちくたびれました。）"
+  },
+  {
+    "number": 488,
+    "english": "soybean",
+    "part_of_speech": "名",
+    "japanese": "大豆",
+    "example_en": "Tofu is made from soybeans.",
+    "example_ja": "（豆腐は大豆から作られます。）"
+  },
+  {
+    "number": 489,
+    "english": "guide",
+    "part_of_speech": "名",
+    "japanese": "案内者、ガイド",
+    "example_en": "The guide said the statue is called “Lady Liberty.”",
+    "example_ja": "（ガイドさんは、その像は「レディー・リバティー」と呼ばれていると言いました。）"
+  },
+  {
+    "number": 490,
+    "english": "given",
+    "part_of_speech": "",
+    "japanese": "give の過去分詞",
+    "example_en": "It was given to the US by France in I9th century.",
+    "example_ja": "（それは 19世紀にフランスからアメリカに贈られたものです。）"
+  },
+  {
+    "number": 491,
+    "english": "hundreds of",
+    "part_of_speech": "",
+    "japanese": "何百という",
+    "example_en": "I had to go up hundreds of steps to reach the temple.",
+    "example_ja": "（そのお寺に着くまでに階段を何百段も登らなければなりませんでした。）"
+  },
+  {
+    "number": 492,
+    "english": "crown",
+    "part_of_speech": "名",
+    "japanese": "王冠",
+    "example_en": "Where was the crown found？",
+    "example_ja": "（その王冠はどこで見つかりましたか。）"
+  },
+  {
+    "number": 493,
+    "english": "fantostic",
+    "part_of_speech": "形",
+    "japanese": "すばらしい",
+    "example_en": "The view from there was fantostic！",
+    "example_ja": "（そこからの眺めはすばらしいものでした！）"
+  },
+  {
+    "number": 494,
+    "english": "gold",
+    "part_of_speech": "名形",
+    "japanese": "金（の）",
+    "example_en": "The gold pen was given to Ann by the school.",
+    "example_ja": "（その金のペンは学校からアンに贈られました。）"
+  },
+  {
+    "number": 495,
+    "english": "medal",
+    "part_of_speech": "名",
+    "japanese": "メダル，勲章",
+    "example_en": "Ann was given the gold medal by the school.",
+    "example_ja": "（アンは学校から金メダルを贈られました。）"
+  },
+  {
+    "number": 496,
+    "english": "lecture",
+    "part_of_speech": "名",
+    "japanese": "講義，講演",
+    "example_en": "Linda gave a lecture on forests in the US.",
+    "example_ja": "（リンダはアメリカの森林について講義しました。）"
+  },
+  {
+    "number": 497,
+    "english": "Sumatra",
+    "part_of_speech": "名",
+    "japanese": "スマトラ島",
+    "example_en": "Sumatra is an island in Indonesid.",
+    "example_ja": "（スマトラ島はインドネシアにある島です。）"
+  },
+  {
+    "number": 498,
+    "english": "be famous for",
+    "part_of_speech": "",
+    "japanese": "〜で有名である",
+    "example_en": "The island is famous for its beautiful forests.",
+    "example_ja": "（その島は美しい森林で有名です。）"
+  },
+  {
+    "number": 499,
+    "english": "Sumatran",
+    "part_of_speech": "形",
+    "japanese": "スマトラ島の",
+    "example_en": "The Sumatran elephants can only be found there.",
+    "example_ja": "（スマトラゾウはそこでしか見られません。）"
+  },
+  {
+    "number": 500,
+    "english": "perhaps",
+    "part_of_speech": "副",
+    "japanese": "たぶん。おそらく",
+    "example_en": "Perhaps they will arrive here soon.",
+    "example_ja": "（おそらく彼らはここにすぐ到着するでしょう。）"
+  },
+  {
+    "number": 501,
+    "english": "at all",
+    "part_of_speech": "",
+    "japanese": "く否定文で＞全然（•・ない）、少しも（ ない）",
+    "example_en": "This omelet is not bad at all！",
+    "example_ja": "（このオムレツ、まったく悪くないですね！）"
+  },
+  {
+    "number": 502,
+    "english": "chart",
+    "part_of_speech": "名",
+    "japanese": "図表，図",
+    "example_en": "Now, look at this chart.",
+    "example_ja": "（では、こちらの図を見てください。）"
+  },
+  {
+    "number": 503,
+    "english": "hectare",
+    "part_of_speech": "名",
+    "japanese": "ヘクタール ＜面積の単位＞",
+    "example_en": "About 753,000 hectares of forest were lost each year.",
+    "example_ja": "（各年ごとに約75万 3000ヘクタールの森が失われました。）"
+  },
+  {
+    "number": 504,
+    "english": "loss",
+    "part_of_speech": "名",
+    "japanese": "損失，損害",
+    "example_en": "That was a gredt loss for the company.",
+    "example_ja": "（それはその会社にとって多大な損失でした。）"
+  },
+  {
+    "number": 505,
+    "english": "down",
+    "part_of_speech": "副",
+    "japanese": "下へ〔に〕",
+    "example_en": "A lot of trees are cut down every year.",
+    "example_ja": "（毎年多くの木々が切り倒されています。）"
+  },
+  {
+    "number": 506,
+    "english": "product",
+    "part_of_speech": "名",
+    "japanese": "製品",
+    "example_en": "The trees are made into paper and other products.",
+    "example_ja": "（その木々は紙やその他の製品に加工されます。）"
+  },
+  {
+    "number": 507,
+    "english": "Europe",
+    "part_of_speech": "名",
+    "japanese": "ヨーロッパ",
+    "example_en": "My uncle has some friends in Europe.",
+    "example_ja": "（私のおじはヨーロッパに友人が何人かいます。）"
+  },
+  {
+    "number": 508,
+    "english": "north",
+    "part_of_speech": "名形",
+    "japanese": "北（の）",
+    "example_en": "The teami reached the North Pole in 1978.",
+    "example_ja": "（そのチームは1978年に北極点に到達しました。）"
+  },
+  {
+    "number": 509,
+    "english": "North America",
+    "part_of_speech": "名",
+    "japanese": "北米，北アメリカ",
+    "example_en": "Most of the paper is used in North America.",
+    "example_ja": "（そうした紙の大半は北米で使われています。）"
+  },
+  {
+    "number": 510,
+    "english": "burn",
+    "part_of_speech": "動",
+    "japanese": "〜を燃やす。焼く",
+    "example_en": "You mustn't burn garbage in the yard.",
+    "example_ja": "（庭でゴミを燃やしてはいけません。）"
+  },
+  {
+    "number": 511,
+    "english": "illegally",
+    "part_of_speech": "副",
+    "japanese": "不法に",
+    "example_en": "People burn the forests illegally to make farms.",
+    "example_ja": "（人々は畑を作るために不法に森林を燃やします。）"
+  },
+  {
+    "number": 512,
+    "english": "cause",
+    "part_of_speech": "動",
+    "japanese": "〜を引き起こす",
+    "example_en": "The loss of forests causes other problems.",
+    "example_ja": "（森林の損失は、他の問題を引き起こします。）"
+  },
+  {
+    "number": 513,
+    "english": "flood",
+    "part_of_speech": "名",
+    "japanese": "洪水",
+    "example_en": "The heavy rains caused a flood in this ared last year.",
+    "example_ja": "（昨年この地域では豪雨によって洪水が発生しました。）"
+  },
+  {
+    "number": 514,
+    "english": "global",
+    "part_of_speech": "形",
+    "japanese": "世界的な、地球全体の",
+    "example_en": "His grandfather built a global company over 20 years.",
+    "example_ja": "（彼の祖父は20年以上かけてグローバル企業を築きました。）"
+  },
+  {
+    "number": 515,
+    "english": "warming",
+    "part_of_speech": "名",
+    "japanese": "温かくなること、温暖化 スピーチ、演説",
+    "example_en": "There are problems, such as floods and global warming. I'm going to make a speech about the Sumatran rhino.",
+    "example_ja": "（洪水や地球温暖化といった問題があります。）（私はスマトラサイについてスピーチをしたいと思います。）"
+  },
+  {
+    "number": 516,
+    "english": "speech",
+    "part_of_speech": "名",
+    "japanese": "スピーチ、演説",
+    "example_en": "I'm going to make a speech about the Sumatran rhino.",
+    "example_ja": "（私はスマトラサイについてスピーチをしたいと思います。）"
+  },
+  {
+    "number": 517,
+    "english": "rhino",
+    "part_of_speech": "名副",
+    "japanese": "サイ",
+    "example_en": "The Sumatran rhino is the smallest rhino in the world.",
+    "example_ja": "（スマトラサイは世界で最も小さなサイです。）"
+  },
+  {
+    "number": 518,
+    "english": "leaves",
+    "part_of_speech": "",
+    "japanese": "leaf の複数形",
+    "example_en": "Koalas like leaves.",
+    "example_ja": "（コアラは葉っぱが好きです。）"
+  },
+  {
+    "number": 519,
+    "english": "leaf",
+    "part_of_speech": "名",
+    "japanese": "葉",
+    "example_en": "The last leaf fell.",
+    "example_ja": "（最後の葉が落ちました。）"
+  },
+  {
+    "number": 520,
+    "english": "less than",
+    "part_of_speech": "",
+    "japanese": "〜より少ない",
+    "example_en": "There are less than 80 of the rhinos now.",
+    "example_ja": "（現在そのサイの数は 80頭未満です。）"
+  },
+  {
+    "number": 521,
+    "english": "extinction",
+    "part_of_speech": "名",
+    "japanese": "絶滅，死滅",
+    "example_en": "They are in danger of extinction.",
+    "example_ja": "（それらは絶滅の危機にさらされています。）"
+  },
+  {
+    "number": 522,
+    "english": "living",
+    "part_of_speech": "名",
+    "japanese": "生計、暮らし 生計を立てる",
+    "example_en": "To make a living, some people make make a living farms in the forests.",
+    "example_ja": "（生計を立てるために、森の中に畑を作る人もいます。）"
+  },
+  {
+    "number": 523,
+    "english": "kill",
+    "part_of_speech": "動",
+    "japanese": "〜を殺す",
+    "example_en": "About 16 million people were killed in World War I.",
+    "example_ja": "（第一次世界大戦では約 1600万人の人が亡くなりました。）"
+  },
+  {
+    "number": 524,
+    "english": "horn",
+    "part_of_speech": "名",
+    "japanese": "<牛などの＞",
+    "example_en": "Some people hunt the rhinos to sell their horns.",
+    "example_ja": "（サイの角を売るためにそれらを狩る者もいます。）"
+  },
+  {
+    "number": 525,
+    "english": "price",
+    "part_of_speech": "名",
+    "japanese": "値段，価格",
+    "example_en": "The horns are sold at high prices.",
+    "example_ja": "（それらの角は高額で売られています。）"
+  },
+  {
+    "number": 526,
+    "english": "illegal",
+    "part_of_speech": "形",
+    "japanese": "不法の，違法の",
+    "example_en": "Stealing art works is illegal.",
+    "example_ja": "（美術作品を盗むのは違法です。）"
+  },
+  {
+    "number": 527,
+    "english": "hunting",
+    "part_of_speech": "名",
+    "japanese": "狩り，狩猟",
+    "example_en": "There is no end to illegal hunting.",
+    "example_ja": "（違法な狩猟が後を絶たないのです。）"
+  },
+  {
+    "number": 528,
+    "english": "shown",
+    "part_of_speech": "",
+    "japanese": "show の過去分詞",
+    "example_en": "One good example is shown by WWF Japan. Toun］",
+    "example_ja": "（1つの好例がWWFジャパンによって示されています。）"
+  },
+  {
+    "number": 529,
+    "english": "protected",
+    "part_of_speech": "形",
+    "japanese": "保護された。保護指定された",
+    "example_en": "Making farms in the protected areas is illegal.",
+    "example_ja": "（保護区内で畑を作ることは違法です。）"
+  },
+  {
+    "number": 530,
+    "english": "effort",
+    "part_of_speech": "名",
+    "japanese": "努力",
+    "example_en": "As part of these efforts, local people WWF.",
+    "example_ja": "（これらの取り組みの一環として、地元住民はWWFに手を貸しています。）"
+  },
+  {
+    "number": 531,
+    "english": "patrol",
+    "part_of_speech": "動",
+    "japanese": "〜をパトロールする。巡回する",
+    "example_en": "They patrol the forests to stop illegal cutting.",
+    "example_ja": "（彼らは違法な伐採をやめさせるために森林を巡回しています。）"
+  },
+  {
+    "number": 532,
+    "english": "cutting",
+    "part_of_speech": "名",
+    "japanese": "伐採、切ること",
+    "example_en": "Didn't you see my newspaper cuttings？",
+    "example_ja": "（私の新聞の切り抜きを見ませんでしたか。）"
+  },
+  {
+    "number": 533,
+    "english": "return",
+    "part_of_speech": "名",
+    "japanese": "返すこと 返礼として、お返しに",
+    "example_en": "In return, they are given land to form legally.",
+    "example_ja": "（その返礼として、彼らは合法的に耕作する土地を与えられます。）"
+  },
+  {
+    "number": 534,
+    "english": "legally",
+    "part_of_speech": "副",
+    "japanese": "合法的に",
+    "example_en": "They found a way to make a lot of money legally.",
+    "example_ja": "（彼らは合法的に大金をもうける方法を見つけました。）"
+  },
+  {
+    "number": 535,
+    "english": "make sure",
+    "part_of_speech": "",
+    "japanese": "を確かめる、確実に・・する",
+    "example_en": "They make sure no illegal activities occur in the forests.",
+    "example_ja": "（彼らはその森林内で違法な活動が絶対に起こらないようにしています。）"
+  },
+  {
+    "number": 536,
+    "english": "occur",
+    "part_of_speech": "動",
+    "japanese": "起こる、生じる",
+    "example_en": "A fire occurred near my house last night.",
+    "example_ja": "（昨晩、うちの近所で火事が起こりました。）"
+  },
+  {
+    "number": 537,
+    "english": "protect",
+    "part_of_speech": "動",
+    "japanese": "〜を保護する",
+    "example_en": "Protecting the forests of Sumatra is important.",
+    "example_ja": "（スマトラの森林を保護することは重要です。）"
+  },
+  {
+    "number": 538,
+    "english": "protection",
+    "part_of_speech": "名",
+    "japanese": "保護 感情を表す表現",
+    "example_en": "The protection of animals is important.",
+    "example_ja": "（動物の保護は重要です。）"
+  },
+  {
+    "number": 539,
+    "english": "novel",
+    "part_of_speech": "名",
+    "japanese": "（長編の）小説",
+    "example_en": "How did you like the novel？",
+    "example_ja": "（その小説はどうでしたか。）"
+  },
+  {
+    "number": 540,
+    "english": "depress",
+    "part_of_speech": "動",
+    "japanese": "〜に気落ちさせる、落胆させる",
+    "example_en": "Linda is depressed by ［at］ the loss of her job.",
+    "example_ja": "（リンダは仕事を失って気落ちしています。）"
+  },
+  {
+    "number": 541,
+    "english": "frighten",
+    "part_of_speech": "動",
+    "japanese": "〜をおびえさせる、ぞっとさせる",
+    "example_en": "The children were frightened by the noise.",
+    "example_ja": "（子供たちはその物音にびくっとしました。）"
+  },
+  {
+    "number": 542,
+    "english": "bore",
+    "part_of_speech": "動",
+    "japanese": "（be bored with〜で＞〜に退 屈している",
+    "example_en": "The girl was completely bored with the TV program.",
+    "example_ja": "（その少女はテレビ番組に退屈しきっていました。）"
+  },
+  {
+    "number": 543,
+    "english": "how to",
+    "part_of_speech": "",
+    "japanese": "のしかた。…・・する方法",
+    "example_en": "Could you tell me how to get to the aquarium？",
+    "example_ja": "（水族館への行きかたを教えていただけますか。）"
+  },
+  {
+    "number": 544,
+    "english": "express",
+    "part_of_speech": "名",
+    "japanese": "急行列車",
+    "example_en": "Take the express to Kamome Station.",
+    "example_ja": "（カモメ駅行きの急行列車に乗ってください。）"
+  },
+  {
+    "number": 545,
+    "english": "subway",
+    "part_of_speech": "名",
+    "japanese": "地下鉄",
+    "example_en": "Take the subway and you'll get there in three minutes.",
+    "example_ja": "（地下鉄に乗っていけばそこに3分で着きますよ。）"
+  },
+  {
+    "number": 546,
+    "english": "taxi",
+    "part_of_speech": "名",
+    "japanese": "タクシー",
+    "example_en": "Let's take a taxi to the airport.",
+    "example_ja": "（空港まではタクシーに乗って行きましょう。）"
+  },
+  {
+    "number": 547,
+    "english": "line",
+    "part_of_speech": "名",
+    "japanese": "路線",
+    "example_en": "First, take the Yamanote Line to Ueno.",
+    "example_ja": "（まず山手線に乗って上野まで行ってください。）"
+  },
+  {
+    "number": 548,
+    "english": "Olympic",
+    "part_of_speech": "名",
+    "japanese": "オリンピック大会（の）",
+    "example_en": "Karate became an official Olympic event for the first time.",
+    "example_ja": "（空手が初めてオリンピックの正式競技になりました。）"
+  },
+  {
+    "number": 549,
+    "english": "won",
+    "part_of_speech": "動",
+    "japanese": "win の過去形・過去分詞",
+    "example_en": "Naomi won the first prize.",
+    "example_ja": "（ナオミが1等賞を勝ち取りました。）"
+  },
+  {
+    "number": 550,
+    "english": "win",
+    "part_of_speech": "動",
+    "japanese": "（賞・勝利など）を勝ち取る",
+    "example_en": "Ithink their team will win the game.",
+    "example_ja": "（彼らのチームが試合に勝つと思います。"
+  },
+  {
+    "number": 551,
+    "english": "figure",
+    "part_of_speech": "名",
+    "japanese": "フィギュア（氷上を滑りながら描 ＜図形）、図，図解",
+    "example_en": "He is the most famous figure skater in Japan.",
+    "example_ja": "（彼は日本で最も有名なフィギュアスケート選手です。）"
+  },
+  {
+    "number": 552,
+    "english": "skating",
+    "part_of_speech": "名",
+    "japanese": "スケート",
+    "example_en": "Christine enjoys skating lessons in winter.",
+    "example_ja": "（クリスティーンは冬にスケートのレッスンを楽しみます。）"
+  },
+  {
+    "number": 553,
+    "english": "figure skating",
+    "part_of_speech": "名",
+    "japanese": "フィギュアスケート",
+    "example_en": "She won the gold medal in figure skating.",
+    "example_ja": "（彼女はフィギュアスケートで金メダルを勝ち取りました。）"
+  },
+  {
+    "number": 554,
+    "english": "No thanks.",
+    "part_of_speech": "",
+    "japanese": "結構です。ありがとう。",
+    "example_en": "\"Would you like another sandwich?\" \"No thanks.\"",
+    "example_ja": "（「サンドイッチをもう1ついかが？」「いえ、結構です。」）"
+  },
+  {
+    "number": 555,
+    "english": "i've",
+    "part_of_speech": "",
+    "japanese": "Ihave の短縮形",
+    "example_en": "I've already had two sandwiches.",
+    "example_ja": "（私はもうサンドイッチを2つ食べました。）"
+  },
+  {
+    "number": 556,
+    "english": "already",
+    "part_of_speech": "副",
+    "japanese": "すでに",
+    "example_en": "My mother has already washed the dishes.",
+    "example_ja": "（私の母はすでに食器を洗いました。）"
+  },
+  {
+    "number": 557,
+    "english": "full",
+    "part_of_speech": "形",
+    "japanese": "（〜で）いっぱいの、満腹した",
+    "example_en": "They were gredt, but I'm full.",
+    "example_ja": "（とてもおいしかったですが、もう満腹です。）"
+  },
+  {
+    "number": 558,
+    "english": "bake",
+    "part_of_speech": "動",
+    "japanese": "＜パンなど＞を焼く",
+    "example_en": "I've just baked an apple pie.",
+    "example_ja": "（私はちょうどアップルパイを焼いたところです。）"
+  },
+  {
+    "number": 559,
+    "english": "pie",
+    "part_of_speech": "名",
+    "japanese": "パイ",
+    "example_en": "Meat pie is my favorite food.",
+    "example_ja": "（ミートパイは私の大好物です。）"
+  },
+  {
+    "number": 560,
+    "english": "dessert",
+    "part_of_speech": "名",
+    "japanese": "デザート",
+    "example_en": "I always have room for dessert！",
+    "example_ja": "（いつでもデザートは別腹です！）"
+  },
+  {
+    "number": 561,
+    "english": "yourself",
+    "part_of_speech": "名",
+    "japanese": "あなた自身",
+    "example_en": "Tell me about yourself.",
+    "example_ja": "（あなた自身について私に話してください。）"
+  },
+  {
+    "number": 562,
+    "english": "help oneself to",
+    "part_of_speech": "",
+    "japanese": "〜を自由に取って食べる〔飲む］",
+    "example_en": "Please help yourself to those cookies.",
+    "example_ja": "（そのクッキー．自由に取って食べてくださいね。）"
+  },
+  {
+    "number": 563,
+    "english": "written",
+    "part_of_speech": "動",
+    "japanese": "write の過去分詞",
+    "example_en": "I have already written to Tom. Cri（a）n］",
+    "example_ja": "（私はもうトムに手紙を書きました。）"
+  },
+  {
+    "number": 564,
+    "english": "essay",
+    "part_of_speech": "名",
+    "japanese": "作文，エッセイ、レポート",
+    "example_en": "Have you read my essay？",
+    "example_ja": "（私の作文をもう読みましたか。）"
+  },
+  {
+    "number": 565,
+    "english": "haven't",
+    "part_of_speech": "",
+    "japanese": "have not の短縮形",
+    "example_en": "I haven't eaten breakfast yet.",
+    "example_ja": "（私はまだ朝食を食べていません。）"
+  },
+  {
+    "number": 566,
+    "english": "hasn't",
+    "part_of_speech": "",
+    "japanese": "has not の短縮形",
+    "example_en": "My brother hasn't found his smartphone yet.",
+    "example_ja": "（兄はまだスマートフォンを見つけていません。）"
+  },
+  {
+    "number": 567,
+    "english": "been",
+    "part_of_speech": "動",
+    "japanese": "be の過去分詞",
+    "example_en": "I have been a singer for five years.",
+    "example_ja": "（私は歌手になって5年になります。）"
+  },
+  {
+    "number": 568,
+    "english": "ever",
+    "part_of_speech": "名",
+    "japanese": "＜疑問文で） 今までに、かつて",
+    "example_en": "Have you ever been to Kyoto？",
+    "example_ja": "（あなたはこれまでに京都に行ったことがありますか。）"
+  },
+  {
+    "number": 569,
+    "english": "golden",
+    "part_of_speech": "形",
+    "japanese": "金（製）の",
+    "example_en": "What's this golden building？",
+    "example_ja": "（この金の建物は何ですか。）"
+  },
+  {
+    "number": 570,
+    "english": "originally",
+    "part_of_speech": "副",
+    "japanese": "もともと、最初に",
+    "example_en": "Kinkakuji Temple was originally buit more than 600 years ago. Cromer tin lUse Lessori7/",
+    "example_ja": "（金閣寺はもともと 600年以上前に建てられました。）"
+  },
+  {
+    "number": 571,
+    "english": "burn down",
+    "part_of_speech": "",
+    "japanese": "＜建物が＞焼け落ちる",
+    "example_en": "Kinkakuji Temple burned down in 1950.",
+    "example_ja": "（金閣寺は 1950年に焼け落ちました。）"
+  },
+  {
+    "number": 572,
+    "english": "dancer",
+    "part_of_speech": "名",
+    "japanese": "踊る人、ダンサー",
+    "example_en": "Akira is a famous dancer in Japan.",
+    "example_ja": "（アキラは日本で有名なダンサーです。）"
+  },
+  {
+    "number": 573,
+    "english": "abroad",
+    "part_of_speech": "副",
+    "japanese": "外国に（へ）、海外に（へ）",
+    "example_en": "Have you traveled abroad？",
+    "example_ja": "（海外旅行はしたことがありますか。）"
+  },
+  {
+    "number": 574,
+    "english": "gone",
+    "part_of_speech": "動",
+    "japanese": "go の過去分詞 教科認のベー",
+    "example_en": "Tom has alreddy gone home.",
+    "example_ja": "（トムはもう家に帰ってしまいました。）"
+  },
+  {
+    "number": 575,
+    "english": "since",
+    "part_of_speech": "前",
+    "japanese": "選〜以来、〜から",
+    "example_en": "Ive studied English since I was eight years old.",
+    "example_ja": "（私は8歳の時から英語を勉強しています。）"
+  },
+  {
+    "number": 576,
+    "english": "be friends with",
+    "part_of_speech": "",
+    "japanese": "〜と友だちである、親しい",
+    "example_en": "Have you been friends with Karen for a long time？",
+    "example_ja": "（カレンとはずっと親しいのですか。）"
+  },
+  {
+    "number": 577,
+    "english": "for a long time",
+    "part_of_speech": "",
+    "japanese": "長い間",
+    "example_en": "Ihaven't heard from him for a long time.",
+    "example_ja": "（長いこと彼から連絡がありません。）"
+  },
+  {
+    "number": 578,
+    "english": "perfect",
+    "part_of_speech": "形",
+    "japanese": "完全な、申し分のない",
+    "example_en": "Practice makes perfect.",
+    "example_ja": "（練習が 2を作る【習うより慣れろ）。）"
+  },
+  {
+    "number": 579,
+    "english": "each other",
+    "part_of_speech": "",
+    "japanese": "お互い",
+    "example_en": "Ann and I have known each other since last year.",
+    "example_ja": "（アンと私は昨年からお互いに知り合うようになりました。）"
+  },
+  {
+    "number": 580,
+    "english": "stadium",
+    "part_of_speech": "名",
+    "japanese": "競技場、スタジアム",
+    "example_en": "My brother lives near the stadium.",
+    "example_ja": "（兄はスタジアムのそばに住んでいます。）"
+  },
+  {
+    "number": 581,
+    "english": "competition",
+    "part_of_speech": "名",
+    "japanese": "競技（会）",
+    "example_en": "David won the dance competition last year.",
+    "example_ja": "（デイビッドは昨年そのダンス大会で優勝しました。）"
+  },
+  {
+    "number": 582,
+    "english": "we've",
+    "part_of_speech": "",
+    "japanese": "we have の短縮形",
+    "example_en": "We've been talking about Kyoto.",
+    "example_ja": "（私たちは京都のことを話していたんです。）"
+  },
+  {
+    "number": 583,
+    "english": "Clean up",
+    "part_of_speech": "",
+    "japanese": "〜をきれいに（掃除）する、片付ける",
+    "example_en": "Imust clean up my room.",
+    "example_ja": "（私は自分の部屋を掃除しなくてはなりません。）"
+  },
+  {
+    "number": 584,
+    "english": "garage",
+    "part_of_speech": "名",
+    "japanese": "ガレージ、車庫",
+    "example_en": "Our house doesn't have a garage.",
+    "example_ja": "（うちには車庫がありません。）"
+  },
+  {
+    "number": 585,
+    "english": "luck",
+    "part_of_speech": "名",
+    "japanese": "運，幸運 幸運を祈ります！",
+    "example_en": "Good luck Good luck on your exam tomorrow！",
+    "example_ja": "（明日の試験、がんばってください！）"
+  },
+  {
+    "number": 586,
+    "english": "poster",
+    "part_of_speech": "名",
+    "japanese": "ポスター",
+    "example_en": "Mary painted this poster.",
+    "example_ja": "（メアリーがこのポスターを描きました。）"
+  },
+  {
+    "number": 587,
+    "english": "Go for it",
+    "part_of_speech": "",
+    "japanese": "がんばって！",
+    "example_en": "You can do it.Go for it！",
+    "example_ja": "（あなたならできるよ。がんばって！）"
+  },
+  {
+    "number": 588,
+    "english": "threw",
+    "part_of_speech": "動",
+    "japanese": "throw の過去形",
+    "example_en": "Ithrew away old clothes.",
+    "example_ja": "（私は古い服を捨てました。）"
+  },
+  {
+    "number": 589,
+    "english": "social",
+    "part_of_speech": "形",
+    "japanese": "社会的な",
+    "example_en": "The group is fighting for social justice.",
+    "example_ja": "（その団体は社会正義を求めて闘っています。）"
+  },
+  {
+    "number": 590,
+    "english": "social media",
+    "part_of_speech": "名",
+    "japanese": "ソーシャルメディア",
+    "example_en": "Many people get their news from social media.",
+    "example_ja": "（多くの人がソーシャルメディアから情報を得ています。）"
+  },
+  {
+    "number": 591,
+    "english": "typical",
+    "part_of_speech": "形",
+    "japanese": "典型的な",
+    "example_en": "This is a typical case of “food waste！”",
+    "example_ja": "（これは「食料廃棄」の典型的な例です。）"
+  },
+  {
+    "number": 592,
+    "english": "thrown",
+    "part_of_speech": "動",
+    "japanese": "throw の過去分詞",
+    "example_en": "A lot of empty cans are thrown away on the beach.",
+    "example_ja": "（多くの空き缶が砂浜に捨てられています。）"
+  },
+  {
+    "number": 593,
+    "english": "even though",
+    "part_of_speech": "",
+    "japanese": "...ではあるが",
+    "example_en": "Food is thrown away even though it can be eaten.",
+    "example_ja": "（食べ物が、まだ食べられるにもかかわらず、捨てられてしまうのです。）"
+  },
+  {
+    "number": 594,
+    "english": "total",
+    "part_of_speech": "形",
+    "japanese": "合計の",
+    "example_en": "My total score was 1 50.",
+    "example_ja": "（私の合計得点は150でした。）"
+  },
+  {
+    "number": 595,
+    "english": "ton",
+    "part_of_speech": "名",
+    "japanese": "トン ＜重さの単位＞",
+    "example_en": "The total amount of food waste was Six million tons！",
+    "example_ja": "（食料廃棄の総量は600万トンを超えました。）"
+  },
+  {
+    "number": 596,
+    "english": "kilogram",
+    "part_of_speech": "名",
+    "japanese": "キログラム ＜重さの単位＞",
+    "example_en": "Your baggage must be under seven kilograms.",
+    "example_ja": "（荷物は7キログラム未満でなければなりません。）"
+  },
+  {
+    "number": 597,
+    "english": "per",
+    "part_of_speech": "前",
+    "japanese": "〜ごとに、〜につき",
+    "example_en": "How much is the tour per person？",
+    "example_ja": "（そのツアーは1人につきいくらですか。）"
+  },
+  {
+    "number": 598,
+    "english": "industry",
+    "part_of_speech": "名",
+    "japanese": "産業",
+    "example_en": "More than half the food waste comes from the food industry.",
+    "example_ja": "（食料廃棄の半分以上が食品産業から来るものです。）"
+  },
+  {
+    "number": 599,
+    "english": "rest",
+    "part_of_speech": "名",
+    "japanese": "残り",
+    "example_en": "Beth ate only some of the meal and threw away the rest.",
+    "example_ja": "（ベスは食事を少しだけ食べ、残りは捨てました。）"
+  },
+  {
+    "number": 600,
+    "english": "individual",
+    "part_of_speech": "形",
+    "japanese": "個々の。それぞれの",
+    "example_en": "Teachers should listen to individual students' words. Cindividsu",
+    "example_ja": "（a）］ （教師は生徒ひとりひとりの言葉を聞くべきです。）"
+  },
+  {
+    "number": 601,
+    "english": "owner",
+    "part_of_speech": "名",
+    "japanese": "持ち主、所有者、オーナー",
+    "example_en": "Restaurant owners are worried about losing customers.",
+    "example_ja": "（飲食店のオーナーたちは顧客を失うことを恐れています。）"
+  },
+  {
+    "number": 602,
+    "english": "customer",
+    "part_of_speech": "名",
+    "japanese": "客，顧客",
+    "example_en": "I'd like to talk to a customer service person.",
+    "example_ja": "（顧客サービスの担当者とお話がしたいのですが。）"
+  },
+  {
+    "number": 603,
+    "english": "freshness",
+    "part_of_speech": "名",
+    "japanese": "新鮮さ",
+    "example_en": "People believe that “freshness” is important.",
+    "example_ja": "（人々は「新鮮さ」が重要だと考えています。）"
+  },
+  {
+    "number": 604,
+    "english": "avoid",
+    "part_of_speech": "動",
+    "japanese": "〜を避ける",
+    "example_en": "People avoid buying old food.",
+    "example_ja": "（人々は古くなった食べ物を買うことを避けます。）"
+  },
+  {
+    "number": 605,
+    "english": "thinking",
+    "part_of_speech": "名",
+    "japanese": "考え、意見，思想",
+    "example_en": "People's thinking may be changing little by little.",
+    "example_ja": "（人々の考えは少しずつ変わりつつあるのかもしれません。）"
+  },
+  {
+    "number": 606,
+    "english": "shocking",
+    "part_of_speech": "形",
+    "japanese": "衝撃的な、不快な",
+    "example_en": "People saw the shocking photo on social media.",
+    "example_ja": "（d（）kin］ （人々はソーシャルメディアでその衝撃的な画像を見ました。）"
+  },
+  {
+    "number": 607,
+    "english": "major",
+    "part_of_speech": "形",
+    "japanese": "主要な、大手の，重大な",
+    "example_en": "The world is facing the major problem of global warming.",
+    "example_ja": "（世界は温暖化という大きな問題に直面しています。）"
+  },
+  {
+    "number": 608,
+    "english": "discount",
+    "part_of_speech": "名",
+    "japanese": "割引、値引き",
+    "example_en": "I got these sandwiches at a discount price.",
+    "example_ja": "（私はこのサンドイッチを割引価格で買いました。）"
+  },
+  {
+    "number": 609,
+    "english": "best before date",
+    "part_of_speech": "名",
+    "japanese": "賞味期限",
+    "example_en": "I have to use the eggs before their best before date.",
+    "example_ja": "（賞味期限の前に卵を使わないといけません。）"
+  },
+  {
+    "number": 610,
+    "english": "addition",
+    "part_of_speech": "名",
+    "japanese": "追加 その上、さらに加えて",
+    "example_en": "In addition, you need to show your in addition passport here.",
+    "example_ja": "（さらに、ここでパスポートを見せる必要があります。）"
+  },
+  {
+    "number": 611,
+    "english": "various",
+    "part_of_speech": "形",
+    "japanese": "さまざまな、多様な",
+    "example_en": "We can see various animals at the ZOO.",
+    "example_ja": "（動物園ではさまざまな動物を見ることができます。）"
+  },
+  {
+    "number": 612,
+    "english": "logo",
+    "part_of_speech": "名",
+    "japanese": "ロゴ＜タイトル・商標などのデザ イン化された文字＞",
+    "example_en": "The artist created unique logos.",
+    "example_ja": "（そのアーティストはユニークなロゴを生み出しました。）"
+  },
+  {
+    "number": 613,
+    "english": "inform",
+    "part_of_speech": "動",
+    "japanese": "〜に知らせる、伝える AにBを知らせる",
+    "example_en": "A about B They ore trying to inform people about this serious situation.",
+    "example_ja": "（彼らは人々にこの深刻な状況について伝えようとしているのです。）"
+  },
+  {
+    "number": 614,
+    "english": "situation",
+    "part_of_speech": "名",
+    "japanese": "状況，事態",
+    "example_en": "We are now in a difficult situation.",
+    "example_ja": "（現在私たちは難しい状況に置かれています。）"
+  },
+  {
+    "number": 615,
+    "english": "lastly",
+    "part_of_speech": "副",
+    "japanese": "最後に",
+    "example_en": "Lastly, I would like to talk obout other projects.",
+    "example_ja": "（最後に、その他のプロジェクトについてお話ししたいと思います。）"
+  },
+  {
+    "number": 616,
+    "english": "food bank",
+    "part_of_speech": "名",
+    "japanese": "フードバンク",
+    "example_en": "Could you tell me how to use a food bank？",
+    "example_ja": "（フードバンクの利用方法を教えていただけますか。）"
+  },
+  {
+    "number": 617,
+    "english": "mobile app",
+    "part_of_speech": "名",
+    "japanese": "モバイルアプリケーション",
+    "example_en": "It is one of the most popular mobile apps worldwide.",
+    "example_ja": "（それは世界で最も人気のあるモバイルアプリの1つです。）"
+  },
+  {
+    "number": 618,
+    "english": "nationwide",
+    "part_of_speech": "形",
+    "japanese": "全国的な、全国規模の",
+    "example_en": "This is a nationwide convenience store in Japan.",
+    "example_ja": "（これは日本の全国規模のコンビニです。）"
+  },
+  {
+    "number": 619,
+    "english": "surplus",
+    "part_of_speech": "形",
+    "japanese": "余剰の、余分の",
+    "example_en": "People con buy surplus food at discount prices.",
+    "example_ja": "（人々は余った食品を割引価格で買うことができます。）"
+  },
+  {
+    "number": 620,
+    "english": "provide",
+    "part_of_speech": "動",
+    "japanese": "〜を供給する",
+    "example_en": "The company provided their products Europe.",
+    "example_ja": "（その会社はヨーロッパの複数の国に製品を供給しました。）"
+  },
+  {
+    "number": 621,
+    "english": "in need",
+    "part_of_speech": "",
+    "japanese": "必要としている。困っている 動〜を増やす",
+    "example_en": "Mr. Smith gave money to people in need. This city is trying to increase the number of visitors.",
+    "example_ja": "（スミス氏は困っている人々にお金を寄付しました。）（この市は訪問者の数を増やそうとしています。）"
+  },
+  {
+    "number": 622,
+    "english": "increase",
+    "part_of_speech": "動",
+    "japanese": "〜を増やす",
+    "example_en": "This city is trying to increase the number of visitors.",
+    "example_ja": "（この市は訪問者の数を増やそうとしています。）"
+  },
+  {
+    "number": 623,
+    "english": "pick-up",
+    "part_of_speech": "名",
+    "japanese": "＜荷物などを＞行って受け取るこ と、集荷",
+    "example_en": "This convenience store storted pick-up Ipikap］ service.",
+    "example_ja": "（このコンビニは荷物受取サービスを始めました。）"
+  },
+  {
+    "number": 624,
+    "english": "location",
+    "part_of_speech": "名",
+    "japanese": "場所",
+    "example_en": "Our hotel is in a perfect location for shopping.",
+    "example_ja": "（私たちのホテルはショッピングにうってつけの場所にあります。）"
+  },
+  {
+    "number": 625,
+    "english": "system",
+    "part_of_speech": "名",
+    "japanese": "方式，制度",
+    "example_en": "The health core system in this country is changing.",
+    "example_ja": "（この国の医療制度は変わりつつあります。）"
+  },
+  {
+    "number": 626,
+    "english": "at any time",
+    "part_of_speech": "",
+    "japanese": "いつでも",
+    "example_en": "People can pick up food at any time.",
+    "example_ja": "（人々はいつでも食べ物を受け取ることができます。）"
+  },
+  {
+    "number": 627,
+    "english": "nearby",
+    "part_of_speech": "",
+    "japanese": "近くの",
+    "example_en": "We must take this girl to a nearby hospital right now！",
+    "example_ja": "かなければなりません！）"
+  },
+  {
+    "number": 628,
+    "english": "police station",
+    "part_of_speech": "",
+    "japanese": "警察署",
+    "example_en": "Iran to a police station, but there was nobody there.",
+    "example_ja": "（私は察署まで走っていきましたが、そこには誰もいませんでした。）"
+  },
+  {
+    "number": 629,
+    "english": "goal",
+    "part_of_speech": "名",
+    "japanese": "目標",
+    "example_en": "Their goal is to support 100,000 people a year.",
+    "example_ja": "（彼らの目標は年間10万人を支援することです。）"
+  },
+  {
+    "number": 630,
+    "english": "support",
+    "part_of_speech": "動",
+    "japanese": "〜を支援する、支える",
+    "example_en": "They give this food to support people in need.",
+    "example_ja": "（彼らは困っている人々を支えるためにこれらの食品を提供しています。）"
+  },
+  {
+    "number": 631,
+    "english": "organization",
+    "part_of_speech": "名",
+    "japanese": "組織",
+    "example_en": "He works for the World Health Organization.",
+    "example_ja": "（彼は世界保健機関（WHO）で働いています。）"
+  },
+  {
+    "number": 632,
+    "english": "regret",
+    "part_of_speech": "名",
+    "japanese": "後悔、残念",
+    "example_en": "This word expresses a sense of regret obout waste.",
+    "example_ja": "（この言葉は、無駄を借しむ感覚を表します。）"
+  },
+  {
+    "number": 633,
+    "english": "maker",
+    "part_of_speech": "名",
+    "japanese": "メーカー、製造業者",
+    "example_en": "The center buys surplus food from food makers.",
+    "example_ja": "（そのセンターは余った食べ物を食品メーカーから買い取ります。）"
+  },
+  {
+    "number": 634,
+    "english": "website",
+    "part_of_speech": "名",
+    "japanese": "ウェブサイト",
+    "example_en": "Please look at the websites of these food banks.",
+    "example_ja": "（これらのフードバンクのウェブサイトを見てください。）"
+  },
+  {
+    "number": 635,
+    "english": "post",
+    "part_of_speech": "動",
+    "japanese": "＜ウェブ上に＞〜を投稿する。 アップする",
+    "example_en": "Restourants post pictures and prices of surplus food.",
+    "example_ja": "（飲食店は余った食品の画像と値段を投稿します。）"
+  },
+  {
+    "number": 636,
+    "english": "lead",
+    "part_of_speech": "動",
+    "japanese": "＜lead toで）…・・という結果にな る、…・・を引き起こす",
+    "example_en": "Mainly, human activities lead to global warming.",
+    "example_ja": "（主に、人間の活動が地球温暖化を引き起こしています。）"
+  },
+  {
+    "number": 637,
+    "english": "progress",
+    "part_of_speech": "名",
+    "japanese": "進歩，前進",
+    "example_en": "One small step can lead to great progress.",
+    "example_ja": "（小さな一歩が大きな前進につながることもあるのです。）"
+  },
+  {
+    "number": 638,
+    "english": "Germany",
+    "part_of_speech": "名",
+    "japanese": "ドイツ",
+    "example_en": "Ihave been to Germany",
+    "example_ja": "（私はドイツに行ったことがあります。）"
+  },
+  {
+    "number": 639,
+    "english": "atmosphere",
+    "part_of_speech": "名",
+    "japanese": "雰囲気",
+    "example_en": "Iloved the atmosphere there.",
+    "example_ja": "（私はそこの雰囲気が大いに気に入りました。）"
+  },
+  {
+    "number": 640,
+    "english": "Italy",
+    "part_of_speech": "名",
+    "japanese": "イタリア",
+    "example_en": "What did you like about Italy？",
+    "example_ja": "（イタリアのどんなところが気に入りましたか。）"
+  },
+  {
+    "number": 641,
+    "english": "russid",
+    "part_of_speech": "名",
+    "japanese": "ロシア",
+    "example_en": "How long has Tom lived in Russid？",
+    "example_ja": "（トムはどのくらいロシアに住んでいますか。）"
+  },
+  {
+    "number": 642,
+    "english": "Egypt",
+    "part_of_speech": "名",
+    "japanese": "エジプト",
+    "example_en": "My wife has been to Egypt twice.",
+    "example_ja": "（妻はエジプトに2度行ったことがあります。）"
+  },
+  {
+    "number": 643,
+    "english": "thailand",
+    "part_of_speech": "名",
+    "japanese": "タイ",
+    "example_en": "Jane learned cooking in Thailand.",
+    "example_ja": "（ジェーンはタイで料理を学びました。）"
+  },
+  {
+    "number": 644,
+    "english": "New Zealand",
+    "part_of_speech": "名",
+    "japanese": "ニュージーランド",
+    "example_en": "We went to New Zealand on a school trip.",
+    "example_ja": "（私たちは修学旅行でニュージーランドに行きました。）"
+  },
+  {
+    "number": 645,
+    "english": "matter",
+    "part_of_speech": "名",
+    "japanese": "困ったこと、問題",
+    "example_en": "What's the matter with you？",
+    "example_ja": "（どうかしましたか。）"
+  },
+  {
+    "number": 646,
+    "english": "scarf",
+    "part_of_speech": "名",
+    "japanese": "スカーフ、マフラー",
+    "example_en": "I've been looking for my scarf.",
+    "example_ja": "（私は自分のスカーフを探しています。）"
+  },
+  {
+    "number": 647,
+    "english": "glove",
+    "part_of_speech": "名",
+    "japanese": "手袋",
+    "example_en": "Idonit think the glove is Mike's.",
+    "example_ja": "（その手袋はマイクのものではないと思います。）"
+  },
+  {
+    "number": 648,
+    "english": "wallet",
+    "part_of_speech": "名副",
+    "japanese": "札入れ、財布",
+    "example_en": "Have you found your wallet yet？",
+    "example_ja": "（もう財布は見つかりましたか。）"
+  },
+  {
+    "number": 649,
+    "english": "raincoot",
+    "part_of_speech": "名",
+    "japanese": "レインコート",
+    "example_en": "It looks like rain. Take Q raincoot with you.",
+    "example_ja": "（雨が降りそうです。レインコートを持っていきなさい。）"
+  },
+  {
+    "number": 650,
+    "english": "handsome",
+    "part_of_speech": "形副",
+    "japanese": "ハンサムな",
+    "example_en": "David is very handsome.",
+    "example_ja": "（デイビッドはとてもハンサムです。）"
+  },
+  {
+    "number": 651,
+    "english": "phone",
+    "part_of_speech": "名",
+    "japanese": "電話",
+    "example_en": "My phone is not working.",
+    "example_ja": "（私の話は壊れています。）"
+  },
+  {
+    "number": 652,
+    "english": "trust",
+    "part_of_speech": "動",
+    "japanese": "〜を信用する",
+    "example_en": "Trust yourself！",
+    "example_ja": "（自分のことをじてください！）"
+  },
+  {
+    "number": 653,
+    "english": "Chinatown",
+    "part_of_speech": "名",
+    "japanese": "中華街。チャイナタウン",
+    "example_en": "Have you ever been to Chinatown？",
+    "example_ja": "（あなたは中華街に行ったことがありますか。）"
+  },
+  {
+    "number": 654,
+    "english": "whole",
+    "part_of_speech": "形",
+    "japanese": "まるまるの，全体の，すべての",
+    "example_en": "My whole family loves Chinese food.",
+    "example_ja": "（私の家族はみんな中華料理が大好きです。）"
+  },
+  {
+    "number": 655,
+    "english": "brunch",
+    "part_of_speech": "名",
+    "japanese": "ブランチ、（昼兼用の）遅い朝食",
+    "example_en": "We often come here for Sunday brunch.",
+    "example_ja": "（私たちはよく日曜のブランチにここに来ます。）"
+  },
+  {
+    "number": 656,
+    "english": "crazy",
+    "part_of_speech": "形",
+    "japanese": "＜be crazy about ~で）〜に夢 中である。熱中している",
+    "example_en": "My family are all crazy about Chinese food.",
+    "example_ja": "（うちの家族はみんな中華料理に夢中です。）"
+  },
+  {
+    "number": 657,
+    "english": "custard",
+    "part_of_speech": "名",
+    "japanese": "カスタード",
+    "example_en": "This custard cream is wonderful！",
+    "example_ja": "（このカスタードクリームは最高ですね！）"
+  },
+  {
+    "number": 658,
+    "english": "bun",
+    "part_of_speech": "名",
+    "japanese": "＜ハンバーガーなどの＞丸パン",
+    "example_en": "The custard buns are really delicious. Grammorlie: Use",
+    "example_ja": "（このクリームパンは本当においしいです。）"
+  },
+  {
+    "number": 659,
+    "english": "seafood",
+    "part_of_speech": "名",
+    "japanese": "海産物，魚介類",
+    "example_en": "I went to the seafood restaurant.",
+    "example_ja": "（私はその海鮮料理店に行きました。）"
+  },
+  {
+    "number": 660,
+    "english": "audience",
+    "part_of_speech": "名",
+    "japanese": "聴衆、観客",
+    "example_en": "This song was well known to the audience.",
+    "example_ja": "（この歌は観客たちによく知られていました。）"
+  },
+  {
+    "number": 661,
+    "english": "clothes",
+    "part_of_speech": "名",
+    "japanese": "衣服＜複数形で＞",
+    "example_en": "I bought new clothes.",
+    "example_ja": "（新しい服を買いました。）"
+  },
+  {
+    "number": 662,
+    "english": "staff",
+    "part_of_speech": "名",
+    "japanese": "職員、店員",
+    "example_en": "How many staff do you have in your restaurant？",
+    "example_ja": "（あなたのレストランには何人の店員がいますか。）"
+  },
+  {
+    "number": 663,
+    "english": "police",
+    "part_of_speech": "名",
+    "japanese": "警察，營官隊",
+    "example_en": "Police are looking for a man in a black cop.",
+    "example_ja": "（警察は黒い帽子をかぶった男性を探しています。）"
+  },
+  {
+    "number": 664,
+    "english": "pumpkin",
+    "part_of_speech": "名",
+    "japanese": "カボチャ",
+    "example_en": "I bought two pumpkins.",
+    "example_ja": "（私はカボチャを2個買いました。）"
+  },
+  {
+    "number": 665,
+    "english": "pound",
+    "part_of_speech": "名",
+    "japanese": "ポンド＜重さの単位＞",
+    "example_en": "Id like a pound of butter.",
+    "example_ja": "（バターを1ポンドください。）"
+  },
+  {
+    "number": 666,
+    "english": "butter",
+    "part_of_speech": "名",
+    "japanese": "バター",
+    "example_en": "How much butter do you want？",
+    "example_ja": "（バターはどのくらいほしいのですか。）"
+  },
+  {
+    "number": 667,
+    "english": "Los Angeles",
+    "part_of_speech": "名",
+    "japanese": "ロサンゼルス",
+    "example_en": "David left Tokyo for Los Angeles this morning.",
+    "example_ja": "（デイビッドは今朝東京を発ってロサンゼルスに向かいました。）"
+  },
+  {
+    "number": 668,
+    "english": "air",
+    "part_of_speech": "名",
+    "japanese": "空気、大気",
+    "example_en": "We can't live without air.",
+    "example_ja": "（私たちは空気なしでは生きられません。）"
+  },
+  {
+    "number": 669,
+    "english": "lemon",
+    "part_of_speech": "名",
+    "japanese": "レモン",
+    "example_en": "I ordered a cup of tea with lemon.",
+    "example_ja": "（私はレモンティーを注文しました。）（"
+  },
+  {
+    "number": 670,
+    "english": "let",
+    "part_of_speech": "動",
+    "japanese": "＜let ＋〇+原形不定詞で>〜に （自由に）…させる ええと。。そうねえ。",
+    "example_en": "Let me see.Everything looks so Let me see. delicious.",
+    "example_ja": "（どれどれ。全部おいしそうです。）"
+  },
+  {
+    "number": 671,
+    "english": "sauce",
+    "part_of_speech": "名",
+    "japanese": "ソース",
+    "example_en": "This dish is cooked in a spicy sauce.",
+    "example_ja": "（この料理はスパイシーなソースで調理されています。）"
+  },
+  {
+    "number": 672,
+    "english": "sir",
+    "part_of_speech": "名",
+    "japanese": "あなた＜男性（客）に対する丁寧な 呼びかけ>",
+    "example_en": "Yes, sir.",
+    "example_ja": "（はい。お客様。）"
+  },
+  {
+    "number": 673,
+    "english": "That's it.",
+    "part_of_speech": "",
+    "japanese": "それだけです。",
+    "example_en": "\"Anything else?\" \"That's it.\"",
+    "example_ja": "（「他にご注文はございますか。」「以上です。」）"
+  },
+  {
+    "number": 674,
+    "english": "menu",
+    "part_of_speech": "名",
+    "japanese": "メニュー",
+    "example_en": "Can I have the menu？",
+    "example_ja": "（メニューをいただけますか。）"
+  },
+  {
+    "number": 675,
+    "english": "highlighter",
+    "part_of_speech": "名",
+    "japanese": "蛍光ペン、マーカー",
+    "example_en": "Which is your highlighter？",
+    "example_ja": "（どちらがあなたの蛍光ペンですか。）"
+  },
+  {
+    "number": 676,
+    "english": "somewhere",
+    "part_of_speech": "副",
+    "japanese": "どこかで、どこかへ",
+    "example_en": "I left my umbrella somewhere.",
+    "example_ja": "（どこかに傘を置いてきてしまいました。）"
+  },
+  {
+    "number": 677,
+    "english": "male",
+    "part_of_speech": "形",
+    "japanese": "＜女性に対して＞男性の。く動物の） オスの",
+    "example_en": "I have a male dog.",
+    "example_ja": "（私はオスの犬を飼っています。）"
+  },
+  {
+    "number": 678,
+    "english": "female",
+    "part_of_speech": "形",
+    "japanese": "＜男性に対して＞女性の。く動物の＞ メスの",
+    "example_en": "Is this cat male or female？",
+    "example_ja": "（このネコはオスですか。それともメスですか。）"
+  },
+  {
+    "number": 679,
+    "english": "celebrate",
+    "part_of_speech": "動",
+    "japanese": "〜を祝う",
+    "example_en": "The members of my club celebrated my binthday",
+    "example_ja": "（部活の仲間たちが私の誕生日を祝ってくれました。）"
+  },
+  {
+    "number": 680,
+    "english": "present",
+    "part_of_speech": "名",
+    "japanese": "プレゼント、贈り物",
+    "example_en": "Karen gave me a present for my binthday.",
+    "example_ja": "（カレンが私の誕生日にプレゼントをくれました。）"
+  }
+];
+
+(function(){
+    'use strict';
+    let allWords = WORDS_DATA;
+    let words = [...allWords];
+    let idx = 0;
+    let showing = false;
+
+    const $=s=>document.querySelector(s);
+    const $$=s=>document.querySelectorAll(s);
+    const cardArea=$('#card-area'),cardQ=$('#card-q'),cardA=$('#card-a');
+    const wordNumBar=$('#word-num-bar');
+    const listView=$('#list-view'),navFooter=$('#nav-footer');
+    const btnPrev=$('#btn-prev'),btnNext=$('#btn-next');
+    const wordSel=$('#word-sel'),counter=$('#counter'),progressBar=$('#progress-bar');
+
+    const POS_LABELS={'名':'名詞','動':'動詞','形':'形容詞','副':'副詞','前':'前置詞','接':'接続詞','間':'間投詞','代':'代名詞','助':'助動詞'};
+    function posClass(p){const c=(p||'').charAt(0);return 'pos-'+(['名','動','形','副','前','接','間','代','助'].includes(c)?c:'default')}
+    function posLabel(p){if(!p)return '';return p.split(/[・,、]/).map(x=>POS_LABELS[x.trim()]||x.trim()).join('・')}
+
+    function highlightWord(sentence,word){
+        if(!sentence||!word)return sentence||'';
+        const stem=word.replace(/(e?s|ed|ing|ly|er|est|tion|ment)$/i,'');
+        const esc=stem.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        return sentence.replace(new RegExp('\\b('+esc+'\\w*)\\b','gi'),'<span class="hl">$1</span>');
+    }
+
+    function buildSelect(){
+        wordSel.innerHTML='';
+        let og=null;
+        words.forEach((w,i)=>{
+            if(i%20===0){
+                const s=words[i].number,e=words[Math.min(i+19,words.length-1)].number;
+                og=document.createElement('optgroup');og.label='#'+s+' – #'+e;wordSel.appendChild(og);
+            }
+            const o=document.createElement('option');o.value=i;o.textContent='#'+w.number+' '+w.english;og.appendChild(o);
+        });
+    }
+
+    function buildList(){
+        listView.innerHTML='';
+        words.forEach((w,i)=>{
+            const d=document.createElement('div');d.className='list-item';
+            d.innerHTML='<span class="li-num">#'+w.number+'</span><span class="li-eng">'+w.english+'</span><span class="li-ja">'+w.japanese+'</span>';
+            d.addEventListener('click',()=>{switchMode('card');showWord(i)});
+            listView.appendChild(d);
+        });
+    }
+
+    function showWord(i){
+        if(i<0||i>=words.length)return;
+        idx=i;showing=false;
+        const w=words[idx];
+        wordNumBar.textContent='#'+w.number;
+        $('#eng-word').textContent=w.english;
+        const pq=$('#pos-q');pq.textContent=posLabel(w.part_of_speech);pq.className='pos-badge '+posClass(w.part_of_speech);
+        $('#ja-word').textContent=w.japanese;
+        const pa=$('#pos-a');pa.textContent=posLabel(w.part_of_speech);pa.className='pos-badge-lg '+posClass(w.part_of_speech);
+        $('#ex-en').innerHTML=highlightWord(w.example_en,w.english);
+        $('#ex-ja').textContent=w.example_ja;
+        cardQ.classList.add('active');cardA.classList.remove('active');
+        updateUI();wordSel.value=idx;
+    }
+
+    function revealAnswer(){showing=true;cardQ.classList.remove('active');cardA.classList.add('active');updateUI()}
+    function toggleCard(){if(!showing)revealAnswer();else{showing=false;cardA.classList.remove('active');cardQ.classList.add('active')}}
+
+    function updateUI(){
+        counter.textContent=(idx+1)+' / '+words.length;
+        progressBar.style.width=((idx+1)/words.length*100)+'%';
+        btnPrev.disabled=idx===0;btnNext.disabled=idx===words.length-1;
+    }
+
+    function switchMode(mode){
+        $$('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===mode));
+        if(mode==='card'){cardArea.style.display='flex';listView.classList.remove('active');navFooter.style.display='flex'}
+        else{cardArea.style.display='none';listView.classList.add('active');navFooter.style.display='none'}
+    }
+
+    function shuffle(){for(let i=words.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[words[i],words[j]]=[words[j],words[i]]}buildSelect();buildList();showWord(0)}
+    function unshuffle(){words=[...allWords];buildSelect();buildList();showWord(0)}
+
+    btnPrev.addEventListener('click',()=>showWord(idx-1));
+    btnNext.addEventListener('click',()=>showWord(idx+1));
+    wordSel.addEventListener('change',()=>showWord(parseInt(wordSel.value)));
+    $('#btn-shuffle').addEventListener('click',()=>{
+        const s=words.some((w,i)=>allWords[i]&&w.number!==allWords[i].number);
+        if(s)unshuffle();else shuffle();
+    });
+    $$('.mode-tab').forEach(t=>t.addEventListener('click',()=>switchMode(t.dataset.mode)));
+    cardArea.addEventListener('click',()=>{toggleCard()});
+
+    document.addEventListener('keydown',e=>{
+        switch(e.key){
+            case'ArrowLeft':showWord(idx-1);break;
+            case'ArrowRight':showWord(idx+1);break;
+            case' ':case'Enter':e.preventDefault();toggleCard();break;
+        }
+    });
+
+    let tx=0;
+    cardArea.addEventListener('touchstart',e=>{tx=e.changedTouches[0].screenX},{passive:true});
+    cardArea.addEventListener('touchend',e=>{const d=e.changedTouches[0].screenX-tx;if(Math.abs(d)>60){d>0?showWord(idx-1):showWord(idx+1)}},{passive:true});
+
+    buildSelect();buildList();showWord(0);
+})();
+</script>
+</body>
+</html>
